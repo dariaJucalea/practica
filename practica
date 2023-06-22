@@ -1,0 +1,52 @@
+#!/bin/bash
+
+initializare()
+{
+executables=$(find / -type f -executable -user $USER 2>/dev/null)
+
+if [[ -z $executables ]]; then
+    zenity --info --text="Nu s-au găsit fișiere executabile deținute de utilizatorul curent. Ieșire."
+    exit 0
+fi
+
+combo_values=$(echo "$executables" | tr '\n' '|')
+
+inputs=$(find / -type f -user $USER 2>/dev/null)
+combo_inputs=$(echo "$inputs" | tr '\n' '|')
+
+outputs=$(find / -type f -user $USER 2>/dev/null)
+combo_outputs=$(echo "$outputs" | tr '\n' '|')
+
+selection=$(zenity --forms --title="Meniu inițial" --text="Selectează opțiunea dorită" --add-combo="Script:" --combo-values="$combo_values" --add-entry="Fișier de intrare:" --add-entry="Fișier de ieșire:")
+}
+
+verifica()
+{
+if [[ -z "$selection" ]]; then
+  zenity --info --text="Nicio opțiune selectată. Ieșire."
+  exit 0
+fi
+
+script=$(echo "$selection" | awk -F"|" '{print $1}')
+input=$(echo "$selection" | awk -F"|" '{print $2}')
+output=$(echo "$selection" | awk -F"|" '{print $3}')
+
+zenity --info --text="Opțiunea selectată: $script\nFișierul de intrare: $input\nFișierul de ieșire: $output"
+
+sudo chmod a+x $script
+
+touch out.txt
+$script $input out.txt
+passed=`diff $output out.txt`
+if [[ ! $passed ]]
+then
+zenity --info --text="PASSED  \n Tip de executie:" 
+else 
+zenity --info --text="FAILED"
+fi
+}
+
+initializare
+verifica
+
+
