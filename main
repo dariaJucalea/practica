@@ -1,5 +1,38 @@
 #!/bin/bash
 
+declare -a scripturi
+declare -a failed
+declare -a passed
+
+verificare()
+{
+exista=0
+for element in "${scripturi[@]}"
+do
+if [[ $element = $valoare ]]
+then
+exista=1
+fi
+done
+}
+
+afisare_statistici()
+{
+
+list=()
+
+for index in "${!scripturi[@]}"; do
+    passed_count=${passed[$index]}
+    failed_count=${failed[$index]}
+    total=$((passed_count + failed_count))
+    procent=$(bc <<< "scale=2; $passed_count * 100 / $total")
+    list+=("${scripturi[$index]}" "${passed[$index]}" "${failed[$index]}" "$procent%")
+done
+
+zenity --list --title="Rezultate" --column="Script" --column="PASSED" --column="FAILED" --column="Procent" --height=400 --width=500 "${list[@]}"
+
+}
+
 initializare_contor()
 {
 list=()
@@ -27,7 +60,7 @@ selection=$(zenity --forms --title="Meniu inițial" --text="Selectează opțiune
 
 if [[ $? -eq 1 ]]
 then
-exit 0
+afisare_statistici
 fi
 
 if [[ $? -eq 0 ]]
@@ -63,12 +96,34 @@ time_real=`echo "$time_value"| cut -f2 -d$'\t'`
 signals=`echo "$result"|cut -f7 -d' '`
 add_values_to_list $script $input $return_code $files $strace $ltrace $signals $value $time_real
 
+valoare=$script
+verificare
+if [[ $exista -eq 1 ]]
+then 
+   for index in "${!scripturi[@]}"; do
+    if [[ "${scripturi[$index]}" = "$valoare" ]]
+    then
+        break
+    fi
+done
+if [[ $value = "FAILED" ]]
+then
+    ((failed[$index]++))
+else
+    ((passed[$index]++))
+fi
+elif [[ $exista -eq 0 ]]
+then
+scripturi+=("$script")
+if [[ $value = "FAILED" ]]
+then
+    failed+=("1")
+else
+    passed+=("1")
+fi
+fi
 }
 
-afisare_statistici()
-{
-echo "gata"
-}
 initializare_contor
 initializare
 afisare_statistici
