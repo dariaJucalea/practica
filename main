@@ -8,7 +8,7 @@ add_values_to_list() {
 
 list+=("$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9")
 
-zenity --list --title="Rezultate" --column="Script" --column="Test" --column="Cod return" --column="Fisiere create" --column="Apeluri de sistem" --column="Apeluri de biblioteca" --column="Semnale" --column="Status" --column="Timp de executie"  --height=800 --width=1100  "${list[@]}"
+zenity --list --title="Rezultate" --column="Script" --column="Test" --column="Cod return" --column="Fisiere create" --column="Apeluri de sistem" --column="Apeluri de biblioteca" --column="Semnale" --column="Status" --column="Timp de executie"  --height=800 --width=1160  "${list[@]}"
 }
 
 initializare()
@@ -58,9 +58,10 @@ files=`echo "$result"|cut -f3 -d' '`
 strace=`echo "$result"|cut -f4 -d' '`
 ltrace=`echo "$result"|cut -f5 -d' '`
 time=`echo "$result"|cut -f6 -d' '`
-time_value=`cat $time`
+time_value=`cat $time| egrep "real"`
+time_real=`echo "$time_value"| cut -f2 -d$'\t'`
 signals=`echo "$result"|cut -f7 -d' '`
-add_values_to_list $script $input $return_code $files $strace $ltrace $signals $value $time_value
+add_values_to_list $script $input $return_code $files $strace $ltrace $signals $value $time_real
 
 }
 
