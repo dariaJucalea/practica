@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 script=$1
 input=$2
 output=$3
@@ -8,22 +9,41 @@ sudo chmod a+x $script
 touch out.txt
 
 name=`echo "$script"|cut -f2 -d'/'`
+
+if [[ ! -f return_code_$name ]]
+then
 touch return_code_$name
+fi
+if [[ ! -f time_$name ]]
+then
 touch time_$name
+fi
+if [[ ! -f files_$name ]]
+then
 touch files_$name
+fi
+if [[ ! -f strace_$name ]]
+then
 touch strace_$name
+fi
+if [[ ! -f ltrace_$name ]]
+then
 touch ltrace_$name
+fi
+if [[ ! -f signals_$name ]]
+then
 touch signals_$name
+fi
 
 $script $input out.txt
-return_code=$?
-time_s=`stat --format="%x" $script`
-files=`find . -type f -newermt "$time_s">files_$name`
-strace=`sudo strace -c $script>strace_$name`
-ltrace=`ltrace -c $script>ltrace_$name`
-time=`time bash $script`
-real_time=`echo "$time"| egrep -o "real.*">time_$name`
-signals=`sudo strace -e trace=signal $script>signals_$name`
+
+return_code=$? 2>/dev/null
+time_s=`stat --format="%x" $script 2>/dev/null`
+files=`find . -type f -newermt "$time_s" 2>/dev/null`
+strace=`strace -c $script 2>strace_$name | grep -v "fisierul dat ca parametru nu e de tip regulat file"`
+ltrace=`ltrace -c $script 2>ltrace_$name`
+time=`time bash $script 2>time_$name`
+signals=`strace -e trace=signal $script 2>signals_$name`
 passed=`diff $output out.txt`
 
 if [[ ! $passed ]]
@@ -33,8 +53,11 @@ else
 result="FAILED"
 fi
 
+echo "$return_code"> return_code_$name 
+echo "$files"> files_$name
+echo "$strace">>strace_$name
+echo "$ltrace">>ltrace_$name
+echo "$time">>time_$name
+echo "$signals">>signals_$name
 
-
-echo "$return_code"> return_code_$name
-
-echo "$result return_code_$name files_$name strace_$name ltrace_$name time_$name  signals_$name" 2>/dev/null
+echo "$result return_code_$name files_$name strace_$name ltrace_$name time_$name signals_$name"
