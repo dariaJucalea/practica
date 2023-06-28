@@ -42,7 +42,8 @@ time_s=`stat --format="%x" $script 2>/dev/null`
 files=`find . -type f -newermt "$time_s" 2>/dev/null`
 strace=`strace -c $script 2>strace_$name | grep -v "fisierul dat ca parametru nu e de tip regulat file"`
 ltrace=`ltrace -c $script 2>ltrace_$name`
-time=`time bash $script 2>time_$name`
+{ time bash $script 2>&1 >/dev/null; } 2>aux.txt
+time_real=$(grep -v "fisierul dat ca parametru nu e de tip regulat file" aux.txt)
 signals=`strace -e trace=signal $script 2>signals_$name`
 passed=`diff $output out.txt`
 
@@ -57,7 +58,7 @@ echo "$return_code"> return_code_$name
 echo "$files"> files_$name
 echo "$strace">>strace_$name
 echo "$ltrace">>ltrace_$name
-echo "$time">>time_$name
+echo "$time_real"|tail -n +2>time_$name
 echo "$signals">>signals_$name
 
 echo "$result return_code_$name files_$name strace_$name ltrace_$name time_$name signals_$name"
