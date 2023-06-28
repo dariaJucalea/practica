@@ -1,0 +1,40 @@
+#!/bin/bash
+
+script=$1
+input=$2
+output=$3
+
+sudo chmod a+x $script
+touch out.txt
+
+name=`echo "$script"|cut -f2 -d'/'`
+touch return_code_$name
+touch time_$name
+touch files_$name
+touch strace_$name
+touch ltrace_$name
+touch signals_$name
+
+$script $input out.txt
+return_code=$?
+time_s=`stat --format="%x" $script`
+files=`find . -type f -newermt "$time_s">files_$name`
+strace=`sudo strace -c $script>strace_$name`
+ltrace=`ltrace -c $script>ltrace_$name`
+time=`time bash $script`
+real_time=`echo "$time"| egrep -o "real.*">time_$name`
+signals=`sudo strace -e trace=signal $script>signals_$name`
+passed=`diff $output out.txt`
+
+if [[ ! $passed ]]
+then
+result="PASSED"
+else
+result="FAILED"
+fi
+
+
+
+echo "$return_code"> return_code_$name
+
+echo "$result return_code_$name files_$name strace_$name ltrace_$name time_$name  signals_$name" 2>/dev/null
