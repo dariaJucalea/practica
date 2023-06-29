@@ -25,11 +25,21 @@ for index in "${!scripturi[@]}"; do
     passed_count=${passed[$index]}
     failed_count=${failed[$index]}
     total=$((passed_count + failed_count))
+    if [[ ! $passed_count -eq 0 ]]
+    then
     procent=$(bc <<< "scale=2; $passed_count * 100 / $total")
+    else
+    procent=0
+    fi
     list+=("${scripturi[$index]}" "${passed[$index]}" "${failed[$index]}" "$procent%")
 done
 
 zenity --list --title="Rezultate" --column="Script" --column="PASSED" --column="FAILED" --column="Procent" --height=400 --width=500 "${list[@]}"
+
+if [[ $? -eq 0 ]]
+then
+exit 0
+fi
 
 }
 
@@ -60,14 +70,12 @@ selection=$(zenity --forms --title="Meniu inițial" --text="Selectează opțiune
 
 if [[ $? -eq 1 ]]
 then
-afisare_statistici
+return
 fi
-
 if [[ $? -eq 0 ]]
 then
 verifica
 fi
-
 done
 }
 
@@ -75,7 +83,7 @@ verifica()
 {
 if [[ -z "$selection" ]]; then
   zenity --info --text="Nicio opțiune selectată. Ieșire."
-  exit 0
+  afisare_statistici
 fi
 
 script=$(echo "$selection" | awk -F"|" '{print $1}')
@@ -126,4 +134,5 @@ fi
 
 initializare_contor
 initializare
+afisare_statistici
 afisare_statistici
